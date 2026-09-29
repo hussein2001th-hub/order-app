@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة الطلبات</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+            padding: 5px 10px;
+            font-size: 14px;
+            width: auto;
+        }
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>نظام إدارة الطلبات</h1>
+    
+    <form id="orderForm">
+        <div class="form-group">
+            <label for="orderNumber">رقم الطلب:</label>
+            <input type="number" id="orderNumber" required placeholder="أدخل رقم الطلب">
+        </div>
+        <div class="form-group">
+            <label for="customerLocation">موقع الزبون:</label>
+            <input type="text" id="customerLocation" required placeholder="أدخل موقع الزبون (مثال: بغداد، المنصور...)">
+        </div>
+        <button type="submit">إضافة الطلب</button>
+    </form>
+
+    <table id="ordersTable">
+        <thead>
+            <tr>
+                <th>رقم الطلب</th>
+                <th>موقع الزبون</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- سيتم إضافة الطلبات هنا -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const orderForm = document.getElementById('orderForm');
+    const ordersTableBody = document.querySelector('#ordersTable tbody');
+    let orders = [];
+
+    orderForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const orderNumber = document.getElementById('orderNumber').value;
+        const customerLocation = document.getElementById('customerLocation').value;
+        
+        const newOrder = {
+            id: Date.now(),
+            number: orderNumber,
+            location: customerLocation
+        };
+        
+        orders.push(newOrder);
+        renderOrders();
+        
+        // مسح الحقول بعد الإضافة
+        orderForm.reset();
+    });
+
+    function renderOrders() {
+        ordersTableBody.innerHTML = '';
+        
+        orders.forEach(order => {
+            const row = document.createElement('tr');
+            
+            row.innerHTML = `
+                <td>${order.number}</td>
+                <td>${order.location}</td>
+                <td><button class="delete-btn" onclick="deleteOrder(${order.id})">حذف</button></td>
+            `;
+            
+            ordersTableBody.appendChild(row);
+        });
+    }
+
+    function deleteOrder(id) {
+        orders = orders.filter(order => order.id !== id);
+        renderOrders();
+    }
+</script>
+
+</body>
+</html>
