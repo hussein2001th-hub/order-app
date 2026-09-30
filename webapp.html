@@ -2,115 +2,1026 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إضافة طلب جديد</title>
-    <!-- مكتبة تيليجرام للتطبيقات المصغرة -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>نظام إدارة ومتابعة الطلبات الذكي</title>
+    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* الألوان تتوافق تلقائياً مع ثيم تيليجرام (سواء نهاري أو ليلي) */
+        :root {
+            --primary: #0088cc;
+            --primary-gradient: linear-gradient(135deg, #0088cc 0%, #005580 100%);
+            --accent: #ff9500;
+            --success: #34c759;
+            --danger: #ff3b30;
+            --warning: #ffcc00;
+            --info: #5856d6;
+            --bg-color: #f4f6fa;
+            --card-bg: #ffffff;
+            --text-main: #1c1e21;
+            --text-sub: #8e8e93;
+            --border-light: rgba(0, 0, 0, 0.08);
+            --nav-bg: rgba(255, 255, 255, 0.94);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #0f141c;
+                --card-bg: #1c2431;
+                --text-main: #f5f5f7;
+                --text-sub: #98989f;
+                --border-light: rgba(255, 255, 255, 0.08);
+                --nav-bg: rgba(28, 36, 49, 0.94);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
-            padding: 20px;
+            background-color: var(--tg-theme-bg-color, var(--bg-color));
+            color: var(--tg-theme-text-color, var(--text-main));
             margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            padding: 0 0 85px 0;
+            user-select: none;
+            overflow-x: hidden;
         }
-        h2 {
-            text-align: center;
+
+        /* الرأس العلوي */
+        .top-appbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--nav-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 18px;
+            box-shadow: 0 4px 10px rgba(0, 136, 204, 0.25);
+        }
+
+        .brand-title {
+            font-size: 15px;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .live-tag {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: rgba(52, 199, 89, 0.15);
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .live-tag::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* شاشات التنقل */
+        .page-content {
+            display: none;
+            padding: 16px;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* البطاقات */
+        .glass-card {
+            background: var(--tg-theme-secondary-bg-color, var(--card-bg));
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 14px;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .form-row {
+            margin-bottom: 12px;
+        }
+
+        .form-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .input-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-sub);
             margin-bottom: 5px;
-            color: var(--tg-theme-text-color, #000);
+            display: block;
         }
-        .form-group {
+
+        .styled-input {
+            width: 100%;
+            padding: 11px 13px;
+            border-radius: 12px;
+            border: 1.5px solid var(--border-light);
+            background: var(--tg-theme-bg-color, var(--bg-color));
+            color: var(--text-main);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .styled-input:focus {
+            border-color: var(--primary);
+        }
+
+        /* صف المواد */
+        .product-item {
+            background: var(--tg-theme-bg-color, var(--bg-color));
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border-light);
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
             gap: 8px;
         }
-        label {
+
+        .product-name-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 14px;
             font-weight: 600;
-            font-size: 15px;
-            color: var(--tg-theme-hint-color, #707579);
-        }
-        input {
-            width: 100%;
-            padding: 14px;
-            border: 1px solid var(--tg-theme-hint-color, #ccc);
-            border-radius: 10px;
-            box-sizing: border-box;
-            background-color: var(--tg-theme-secondary-bg-color, #f4f4f5);
-            color: var(--tg-theme-text-color, #000);
-            font-size: 16px;
+            color: var(--text-main);
             outline: none;
-            transition: border-color 0.3s;
         }
-        input:focus {
-            border-color: var(--tg-theme-button-color, #3390ec);
+
+        .counter-ctrl {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--card-bg);
+            padding: 3px 6px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+        }
+
+        .btn-round {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: none;
+            background: var(--primary-gradient);
+            color: #fff;
+            font-size: 15px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .btn-round:active {
+            transform: scale(0.9);
+        }
+
+        .count-display {
+            font-weight: 800;
+            font-size: 14px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .btn-delete-row {
+            border: none;
+            background: transparent;
+            color: var(--danger);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .btn-add-dashed {
+            width: 100%;
+            padding: 11px;
+            border: 2px dashed var(--primary);
+            border-radius: 12px;
+            background: rgba(0, 136, 204, 0.05);
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .order-total-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary-gradient);
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #fff;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
+        .btn-main-submit {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(0, 136, 204, 0.3);
+            margin-top: 12px;
+        }
+
+        /* فلاتر تبويب تتبع الطلبات */
+        .filter-scroll {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+        }
+
+        .filter-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-chip {
+            padding: 7px 14px;
+            border-radius: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-chip.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        /* بطاقة الطلب في شاشة التتبع والتحكم */
+        .order-card {
+            background: var(--tg-theme-secondary-bg-color, var(--card-bg));
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 14px;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.15s;
+        }
+
+        .order-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .order-id-badge {
+            font-weight: 800;
+            font-size: 14px;
+            color: var(--primary);
+        }
+
+        /* حالات الطلب (Badges) */
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-pending {
+            background: rgba(255, 149, 0, 0.15);
+            color: var(--accent);
+        }
+
+        .status-delivering {
+            background: rgba(88, 86, 214, 0.15);
+            color: var(--info);
+        }
+
+        .status-completed {
+            background: rgba(52, 199, 89, 0.15);
+            color: var(--success);
+        }
+
+        .status-cancelled {
+            background: rgba(255, 59, 48, 0.15);
+            color: var(--danger);
+        }
+
+        .order-info-line {
+            font-size: 13px;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .order-info-line strong {
+            color: var(--text-main);
+        }
+
+        .order-items-box {
+            background: var(--tg-theme-bg-color, var(--bg-color));
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        /* أزرار التحكم بالطلب (إكمال / إلغاء / توصيل) */
+        .order-actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 12px;
+            border-top: 1px solid var(--border-light);
+            padding-top: 10px;
+        }
+
+        .btn-action {
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: opacity 0.15s, transform 0.1s;
+        }
+
+        .btn-action:active {
+            transform: scale(0.97);
+            opacity: 0.85;
+        }
+
+        .btn-complete {
+            background: rgba(52, 199, 89, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(52, 199, 89, 0.3);
+        }
+
+        .btn-deliver {
+            background: rgba(88, 86, 214, 0.15);
+            color: var(--info);
+            border: 1px solid rgba(88, 86, 214, 0.3);
+        }
+
+        .btn-cancel {
+            background: rgba(255, 59, 48, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(255, 59, 48, 0.3);
+        }
+
+        .btn-delete {
+            background: rgba(142, 142, 147, 0.15);
+            color: var(--text-sub);
+            border: 1px solid var(--border-light);
+        }
+
+        /* شريط التنقل السفلي */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: var(--nav-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            flex: 1;
+            color: var(--text-sub);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .nav-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .nav-btn.active {
+            color: var(--primary);
+        }
+
+        .toast-msg {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #1c2431;
+            color: #fff;
+            padding: 11px 20px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 9999;
+            transition: transform 0.25s ease;
+        }
+
+        .toast-msg.show {
+            transform: translateX(-50%) translateY(0);
         }
     </style>
 </head>
 <body>
 
-    <h2>📦 تسجيل طلب جديد</h2>
-    
-    <div class="form-group">
-        <label for="order_number">رقم الطلب:</label>
-        <input type="number" id="order_number" placeholder="مثال: 1001" required>
+    <header class="top-appbar">
+        <div class="brand-box">
+            <div class="brand-logo">📦</div>
+            <div>
+                <h2 class="brand-title">منظومة متابعة الطلبات</h2>
+                <div class="live-tag">تحكم مباشر</div>
+            </div>
+        </div>
+        <div style="font-size: 11px; font-weight: 800; color: var(--primary); background: rgba(0,136,204,0.1); padding: 4px 8px; border-radius: 6px;">
+            لوحة الإدارة
+        </div>
+    </header>
+
+    <div id="toast" class="toast-msg">
+        <span>✅ تم تحديث حالة الطلب بنجاح!</span>
     </div>
 
-    <div class="form-group">
-        <label for="location">موقع الزبون:</label>
-        <input type="text" id="location" placeholder="أدخل العنوان بالتفصيل..." required>
-    </div>
+    <!-- ==================== الصفحة 1: إنشاء طلب ==================== -->
+    <main id="page-new-order" class="page-content active">
+        <div class="glass-card">
+            <div class="card-header">
+                <span class="card-title">📍 تفاصيل الزبون والعنوان</span>
+            </div>
+
+            <div class="form-row">
+                <label class="input-label">رقم الطلب:</label>
+                <input type="text" id="order_number" class="styled-input" placeholder="#1001">
+            </div>
+
+            <div class="form-row">
+                <label class="input-label">اسم الزبون:</label>
+                <input type="text" id="customer_name" class="styled-input" placeholder="اسم الزبون الكريم">
+            </div>
+
+            <div class="form-row">
+                <label class="input-label">موقع الزبون (المحافظة / العنوان بالتفصيل):</label>
+                <input type="text" id="customer_location" class="styled-input" placeholder="مثال: بغداد - المنصور - قرب مول...">
+            </div>
+
+            <div class="form-row">
+                <label class="input-label">رقم الهاتف:</label>
+                <input type="tel" id="customer_phone" class="styled-input" placeholder="0770xxxxxxx">
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="card-header">
+                <span class="card-title">🛍️ المواد والأصناف</span>
+                <span style="font-size: 11px; font-weight: 800; color: var(--primary);" id="badgeTotalItems">1 مادة</span>
+            </div>
+
+            <div id="productsList"></div>
+
+            <button type="button" class="btn-add-dashed" onclick="addProductItem()">
+                ➕ إضافة مادة / صنف آخر
+            </button>
+
+            <div class="order-total-bar">
+                <span>مجموع كل القطع:</span>
+                <span id="displayTotalQty">1 قطعة</span>
+            </div>
+        </div>
+
+        <button type="button" class="btn-main-submit" id="btnSubmitOrder" onclick="executeSubmitOrder()">
+            🚀 تسجيل وإرسال الطلب
+        </button>
+    </main>
+
+    <!-- ==================== الصفحة 2: تتبع وإدارة الطلبات (Follow & Manage) ==================== -->
+    <section id="page-tracking" class="page-content">
+        <!-- شريط الفلاتر السريع -->
+        <div class="filter-scroll">
+            <button class="filter-chip active" onclick="setFilter('all', this)">الكل (<span id="count-all">0</span>)</button>
+            <button class="filter-chip" onclick="setFilter('pending', this)">⏳ قيد التجهيز (<span id="count-pending">0</span>)</button>
+            <button class="filter-chip" onclick="setFilter('delivering', this)">🚚 قيد التوصيل (<span id="count-delivering">0</span>)</button>
+            <button class="filter-chip" onclick="setFilter('completed', this)">✅ تم الطلب (<span id="count-completed">0</span>)</button>
+            <button class="filter-chip" onclick="setFilter('cancelled', this)">❌ ملغي (<span id="count-cancelled">0</span>)</button>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+            <input type="text" id="trackingSearch" class="styled-input" placeholder="🔍 ابحث برقم الطلب، اسم الزبون، أو الموقع..." oninput="renderTrackingOrders()">
+        </div>
+
+        <div id="trackingOrdersContainer">
+            <!-- كروت الطلبات تظهر هنا مع أزرار التحكم -->
+        </div>
+    </section>
+
+    <!-- ==================== الصفحة 3: الإحصائيات ==================== -->
+    <section id="page-stats" class="page-content">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+            <div class="glass-card" style="text-align: center; margin: 0;">
+                <div style="font-size: 11px; color: var(--text-sub); font-weight: 700;">إجمالي الطلبات</div>
+                <div style="font-size: 26px; font-weight: 900; color: var(--primary); margin: 6px 0;" id="statTotal">0</div>
+            </div>
+            <div class="glass-card" style="text-align: center; margin: 0;">
+                <div style="font-size: 11px; color: var(--text-sub); font-weight: 700;">الطلبات المكتملة</div>
+                <div style="font-size: 26px; font-weight: 900; color: var(--success); margin: 6px 0;" id="statCompleted">0</div>
+            </div>
+            <div class="glass-card" style="text-align: center; margin: 0;">
+                <div style="font-size: 11px; color: var(--text-sub); font-weight: 700;">الطلبات الملغاة</div>
+                <div style="font-size: 26px; font-weight: 900; color: var(--danger); margin: 6px 0;" id="statCancelled">0</div>
+            </div>
+            <div class="glass-card" style="text-align: center; margin: 0;">
+                <div style="font-size: 11px; color: var(--text-sub); font-weight: 700;">إجمالي عدد القطع</div>
+                <div style="font-size: 26px; font-weight: 900; color: var(--accent); margin: 6px 0;" id="statPieces">0</div>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="card-header"><span class="card-title">⚙️ الإجراءات السريعة</span></div>
+            <button onclick="clearCompletedOrders()" style="width: 100%; padding: 12px; background: rgba(0,136,204,0.1); color: var(--primary); border: none; border-radius: 10px; font-weight: 800; cursor: pointer; margin-bottom: 8px;">
+                🧹 تنظيف الطلبات المكتملة والملغاة
+            </button>
+            <button onclick="resetAllData()" style="width: 100%; padding: 12px; background: rgba(255,59,48,0.1); color: var(--danger); border: none; border-radius: 10px; font-weight: 800; cursor: pointer;">
+                🗑️ مسح كافة بيانات التطبيق
+            </button>
+        </div>
+    </section>
+
+    <!-- شريط التنقل السفلي -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" onclick="switchTab('new-order', this)">
+            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            <span>طلب جديد</span>
+        </button>
+
+        <button class="nav-btn" onclick="switchTab('tracking', this)">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            <span>متابعة الطلبات</span>
+        </button>
+
+        <button class="nav-btn" onclick="switchTab('stats', this)">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+            <span>الإحصائيات</span>
+        </button>
+    </nav>
 
     <script>
-        // تهيئة التطبيق المصغر الخاص بتيليجرام
-        let tg = window.Telegram.WebApp;
-        
-        // توسيع التطبيق ليأخذ الشاشة كاملة
-        tg.expand();
+        const BOT_TOKEN = "8605127523:AAEfSS1SmxWuhKrOsJELYpBOsnjhYuZ2_sI";
+        const ADMIN_ID = "7016438694";
 
-        let orderInput = document.getElementById("order_number");
-        let locationInput = document.getElementById("location");
+        let tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.expand();
+            tg.ready();
+        }
 
-        // إعداد الزر الرئيسي الخاص بتيليجرام
-        tg.MainButton.text = "إرسال الطلب";
-        tg.MainButton.color = tg.themeParams.button_color || "#3390ec";
-        tg.MainButton.textColor = tg.themeParams.button_text_color || "#ffffff";
-        tg.MainButton.show();
+        let productItems = [{ id: 1, name: "مادة 1", qty: 1 }];
+        let activeFilter = 'all';
 
-        // تفعيل زر الإرسال فقط عند ملء الحقول
-        function checkInputs() {
-            if(orderInput.value.trim() !== "" && locationInput.value.trim() !== "") {
-                tg.MainButton.enable();
-            } else {
-                tg.MainButton.disable();
+        function generateOrderId() {
+            return "ORD-" + Math.floor(1000 + Math.random() * 9000);
+        }
+        document.getElementById("order_number").value = generateOrderId();
+
+        function switchTab(tabId, el) {
+            if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+
+            document.querySelectorAll(".page-content").forEach(p => p.classList.remove("active"));
+            document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+
+            document.getElementById("page-" + tabId).classList.add("active");
+            el.classList.add("active");
+
+            if (tabId === 'tracking') renderTrackingOrders();
+            if (tabId === 'stats') updateStats();
+        }
+
+        // إدارة المواد والكميات
+        function renderProductItems() {
+            const container = document.getElementById("productsList");
+            container.innerHTML = "";
+            let total = 0;
+
+            productItems.forEach((item, index) => {
+                total += item.qty;
+                const row = document.createElement("div");
+                row.className = "product-item";
+                row.innerHTML = `
+                    <input type="text" class="product-name-input" value="${item.name}" 
+                           placeholder="اسم المادة..." oninput="productItems[${index}].name = this.value">
+                    <div class="counter-ctrl">
+                        <button type="button" class="btn-round" onclick="modifyQty(${index}, -1)">-</button>
+                        <span class="count-display">${item.qty}</span>
+                        <button type="button" class="btn-round" onclick="modifyQty(${index}, 1)">+</button>
+                    </div>
+                    ${productItems.length > 1 ? `<button type="button" class="btn-delete-row" onclick="removeProductRow(${index})">✕</button>` : ''}
+                `;
+                container.appendChild(row);
+            });
+
+            document.getElementById("displayTotalQty").innerText = total + " قطعة";
+            document.getElementById("badgeTotalItems").innerText = productItems.length + " مادة";
+        }
+
+        function addProductItem() {
+            productItems.push({ id: Date.now(), name: "", qty: 1 });
+            renderProductItems();
+        }
+
+        function modifyQty(idx, change) {
+            if (productItems[idx].qty + change >= 1) {
+                productItems[idx].qty += change;
+                renderProductItems();
             }
         }
 
-        orderInput.addEventListener('input', checkInputs);
-        locationInput.addEventListener('input', checkInputs);
+        function removeProductRow(idx) {
+            productItems.splice(idx, 1);
+            renderProductItems();
+        }
 
-        // ماذا يحدث عند الضغط على الزر الرئيسي
-        tg.onEvent("mainButtonClicked", function() {
-            let order_num = orderInput.value.trim();
-            let loc = locationInput.value.trim();
+        function showToast(text) {
+            const toast = document.getElementById("toast");
+            toast.querySelector("span").innerText = text;
+            toast.classList.add("show");
+            setTimeout(() => { toast.classList.remove("show"); }, 3000);
+        }
 
-            if (order_num === "" || loc === "") {
-                tg.showAlert("الرجاء ملء جميع الحقول!");
+        // إرسال طلب جديد
+        async function executeSubmitOrder() {
+            const orderNum = document.getElementById("order_number").value.trim() || generateOrderId();
+            const custName = document.getElementById("customer_name").value.trim() || "زبون عام";
+            const custLoc = document.getElementById("customer_location").value.trim();
+            const custPhone = document.getElementById("customer_phone").value.trim() || "غير مسجل";
+
+            if (!custLoc) {
+                if (tg && tg.showAlert) tg.showAlert("⚠️ يرجى إدخال موقع الزبون بدقة للمتابعة!");
+                else alert("⚠️ يرجى إدخال موقع الزبون بدقة للمتابعة!");
                 return;
             }
 
-            // تجهيز البيانات لإرسالها للبوت
-            let data = {
-                order_number: order_num,
-                location: loc
+            let itemsListFormatted = [];
+            let totalCount = 0;
+            productItems.forEach((p, i) => {
+                const name = p.name.trim() || `صنف ${i + 1}`;
+                itemsListFormatted.push({ name: name, qty: p.qty });
+                totalCount += p.qty;
+            });
+
+            const newOrderObj = {
+                id: orderNum,
+                customer: custName,
+                location: custLoc,
+                phone: custPhone,
+                items: itemsListFormatted,
+                totalQty: totalCount,
+                status: 'pending', // pending, delivering, completed, cancelled
+                date: new Date().toLocaleDateString('ar-IQ') + ' ' + new Date().toLocaleTimeString('ar-IQ', {hour: '2-digit', minute:'2-digit'})
             };
 
-            // إرسال البيانات وإغلاق التطبيق
-            tg.sendData(JSON.stringify(data));
-        });
+            // حفظ محلياً
+            saveOrder(newOrderObj);
+
+            // إرسال تيليجرام
+            let itemsText = itemsListFormatted.map(i => `▪️ <b>${i.name}</b>: ${i.qty} قطعة`).join("\n");
+            const msg = 
+`📦 <b>وصل طلب جديد!</b>
+━━━━━━━━━━━━━━━━━━━━
+🔢 <b>رقم الطلب:</b> <code>${orderNum}</code>
+👤 <b>الزبون:</b> ${custName}
+📍 <b>الموقع:</b> ${custLoc}
+📞 <b>الهاتف:</b> <code>${custPhone}</code>
+━━━━━━━━━━━━━━━━━━━━
+📋 <b>المواد المطلوبة:</b>
+${itemsText}
+📊 <b>إجمالي القطع:</b> ${totalCount} قطعة
+⏳ <b>الحالة:</b> قيد التجهيز`;
+
+            try {
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chat_id: ADMIN_ID, text: msg, parse_mode: "HTML" })
+                });
+            } catch (e) {}
+
+            showToast("✅ تم تسجيل الطلب وإرساله للإدارة!");
+
+            // تصفير الخانات
+            document.getElementById("order_number").value = generateOrderId();
+            document.getElementById("customer_name").value = "";
+            document.getElementById("customer_location").value = "";
+            document.getElementById("customer_phone").value = "";
+            productItems = [{ id: 1, name: "مادة 1", qty: 1 }];
+            renderProductItems();
+        }
+
+        // حفظ وقراءة الطلبات (Storage)
+        function getOrders() {
+            return JSON.parse(localStorage.getItem("app_orders_db") || "[]");
+        }
+
+        function saveOrder(order) {
+            let list = getOrders();
+            list.unshift(order);
+            localStorage.setItem("app_orders_db", JSON.stringify(list));
+        }
+
+        function updateOrderStatus(orderId, newStatus) {
+            let list = getOrders();
+            const order = list.find(o => o.id === orderId);
+            if (order) {
+                order.status = newStatus;
+                localStorage.setItem("app_orders_db", JSON.stringify(list));
+                
+                if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+
+                // إرسال إشعار للتيليجرام بتغيير الحالة
+                notifyTelegramStatusChange(order, newStatus);
+
+                let statusName = 
+                    newStatus === 'completed' ? '✅ تم إكمال وتوصيل الطلب!' :
+                    newStatus === 'cancelled' ? '❌ تم إلغاء الطلب من الإدارة!' :
+                    newStatus === 'delivering' ? '🚚 الطلب قيد التوصيل الآن!' : '⏳ قيد التجهيز';
+
+                showToast(statusName);
+                renderTrackingOrders();
+            }
+        }
+
+        async function notifyTelegramStatusChange(order, status) {
+            const statusTitles = {
+                'completed': '✅ تم إكمال وتجهيز الطلب بنجاح!',
+                'cancelled': '❌ تم إلغاء هذا الطلب من قبل الإدارة!',
+                'delivering': '🚚 خرج الطلب للتوصيل إلى الزبون!',
+                'pending': '⏳ تم إرجاع الطلب لقيد التجهيز'
+            };
+
+            const text = 
+`🔔 <b>تحديث في حالة الطلب:</b>
+━━━━━━━━━━━━━━━━━━━━
+🔢 <b>رقم الطلب:</b> <code>${order.id}</code>
+👤 <b>الزبون:</b> ${order.customer}
+📍 <b>الموقع:</b> ${order.location}
+📦 <b>الحالة الجديدة:</b> <b>${statusTitles[status]}</b>`;
+
+            try {
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chat_id: ADMIN_ID, text: text, parse_mode: "HTML" })
+                });
+            } catch (e) {}
+        }
+
+        function deleteOrderPermanently(orderId) {
+            if (confirm("هل أنت متأكد من حذف هذا الطلب نهائياً؟")) {
+                let list = getOrders().filter(o => o.id !== orderId);
+                localStorage.setItem("app_orders_db", JSON.stringify(list));
+                showToast("🗑️ تم حذف الطلب من السجل");
+                renderTrackingOrders();
+            }
+        }
+
+        function setFilter(filterType, el) {
+            activeFilter = filterType;
+            document.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
+            el.classList.add("active");
+            renderTrackingOrders();
+        }
+
+        // عرض الطلبات مع أزرار التحكم
+        function renderTrackingOrders() {
+            const container = document.getElementById("trackingOrdersContainer");
+            const allOrders = getOrders();
+            const query = (document.getElementById("trackingSearch")?.value || "").toLowerCase();
+
+            // تحديث أرقام الفلاتر
+            document.getElementById("count-all").innerText = allOrders.length;
+            document.getElementById("count-pending").innerText = allOrders.filter(o => o.status === 'pending').length;
+            document.getElementById("count-delivering").innerText = allOrders.filter(o => o.status === 'delivering').length;
+            document.getElementById("count-completed").innerText = allOrders.filter(o => o.status === 'completed').length;
+            document.getElementById("count-cancelled").innerText = allOrders.filter(o => o.status === 'cancelled').length;
+
+            let filtered = allOrders;
+
+            // فلترة حسب الحالة
+            if (activeFilter !== 'all') {
+                filtered = filtered.filter(o => o.status === activeFilter);
+            }
+
+            // فلترة حسب البحث
+            if (query) {
+                filtered = filtered.filter(o => 
+                    o.id.toLowerCase().includes(query) ||
+                    o.customer.toLowerCase().includes(query) ||
+                    o.location.toLowerCase().includes(query)
+                );
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 50px 20px; color: var(--text-sub);">
+                        <div style="font-size: 40px; margin-bottom: 10px;">🔍</div>
+                        <div style="font-weight: 700;">لا توجد طلبات مطابقة حالياً.</div>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(o => {
+                let badgeClass = 'status-pending';
+                let badgeText = '⏳ قيد التجهيز';
+
+                if (o.status === 'delivering') {
+                    badgeClass = 'status-delivering';
+                    badgeText = '🚚 قيد التوصيل';
+                } else if (o.status === 'completed') {
+                    badgeClass = 'status-completed';
+                    badgeText = '✅ تم الطلب';
+                } else if (o.status === 'cancelled') {
+                    badgeClass = 'status-cancelled';
+                    badgeText = '❌ ملغي';
+                }
+
+                let itemsDetails = (o.items || []).map(i => `• ${i.name} (${i.qty})`).join(" | ");
+
+                return `
+                <div class="order-card">
+                    <div class="order-card-header">
+                        <span class="order-id-badge">${o.id}</span>
+                        <span class="status-badge ${badgeClass}">${badgeText}</span>
+                    </div>
+
+                    <div class="order-info-line">👤 <strong>${o.customer}</strong> ${o.phone ? `(${o.phone})` : ''}</div>
+                    <div class="order-info-line">📍 الموقع: <strong>${o.location}</strong></div>
+                    
+                    <div class="order-items-box">
+                        🛍️ <b>المواد:</b> ${itemsDetails || 'مادة عامة'} 
+                        <br>📊 <b>المجموع:</b> ${o.totalQty || 1} قطعة
+                    </div>
+
+                    <div class="order-info-line" style="font-size: 11px; opacity: 0.7;">⏰ ${o.date}</div>
+
+                    <!-- أزرار الإجراءات للتحكم بالطلب -->
+                    <div class="order-actions-grid">
+                        ${o.status !== 'completed' ? `
+                            <button class="btn-action btn-complete" onclick="updateOrderStatus('${o.id}', 'completed')">
+                                ✅ تم الطلب
+                            </button>
+                        ` : ''}
+
+                        ${o.status !== 'delivering' && o.status !== 'completed' ? `
+                            <button class="btn-action btn-deliver" onclick="updateOrderStatus('${o.id}', 'delivering')">
+                                🚚 جاري التوصيل
+                            </button>
+                        ` : ''}
+
+                        ${o.status !== 'cancelled' ? `
+                            <button class="btn-action btn-cancel" onclick="updateOrderStatus('${o.id}', 'cancelled')">
+                                ❌ إلغاء الطلب
+                            </button>
+                        ` : ''}
+
+                        <button class="btn-action btn-delete" onclick="deleteOrderPermanently('${o.id}')">
+                            🗑️ حذف
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join("");
+        }
+
+        // الإحصائيات
+        function updateStats() {
+            const list = getOrders();
+            document.getElementById("statTotal").innerText = list.length;
+            document.getElementById("statCompleted").innerText = list.filter(o => o.status === 'completed').length;
+            document.getElementById("statCancelled").innerText = list.filter(o => o.status === 'cancelled').length;
+            
+            let totalPieces = 0;
+            list.forEach(o => totalPieces += (o.totalQty || 0));
+            document.getElementById("statPieces").innerText = totalPieces;
+        }
+
+        function clearCompletedOrders() {
+            if (confirm("هل ترغب في تنظيف وحذف الطلبات المكتملة والملغاة فقط؟")) {
+                let list = getOrders().filter(o => o.status === 'pending' || o.status === 'delivering');
+                localStorage.setItem("app_orders_db", JSON.stringify(list));
+                showToast("🧹 تم تنظيف الطلبات المكتملة والملغاة!");
+                updateStats();
+            }
+        }
+
+        function resetAllData() {
+            if (confirm("تحذير: هل أنت متأكد من مسح جميع بيانات وسجل الطلبات بالكامل؟")) {
+                localStorage.removeItem("app_orders_db");
+                showToast("🗑️ تم تصفير كافة البيانات");
+                updateStats();
+                renderTrackingOrders();
+            }
+        }
+
+        // بدء التشغيل
+        renderProductItems();
     </script>
 </body>
 </html>
