@@ -385,6 +385,79 @@
             margin-bottom: 14px;
         }
 
+        /* تنسيقات الإدارة المالية والحسابات */
+        .finance-period-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 14px;
+            background: #fff;
+            padding: 4px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+        }
+        .fp-tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px 4px;
+            font-size: 11px;
+            font-weight: 800;
+            border-radius: 10px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .fp-tab.active {
+            background: var(--primary);
+            color: #fff;
+        }
+        .finance-stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .f-card {
+            background: #fff;
+            padding: 14px 12px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(112, 144, 176, 0.06);
+        }
+        .f-card-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+        .f-card-value {
+            font-size: 17px;
+            font-weight: 900;
+            color: var(--text-main);
+        }
+        .finance-table-wrapper {
+            overflow-x: auto;
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            margin-top: 10px;
+        }
+        .f-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            text-align: right;
+            min-width: 320px;
+        }
+        .f-table th, .f-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .f-table th {
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 800;
+        }
+
         .btn {
             padding: 10px 16px;
             border-radius: 12px;
@@ -520,7 +593,7 @@
                 <div class="grid-card" onclick="openView('view-finance')">
                     <div class="grid-icon-box" style="background: rgba(16, 185, 129, 0.1); color: #059669;">💰</div>
                     <h3>الإدارة المالية</h3>
-                    <p>الأرباح والعمولات</p>
+                    <p id="grid-finance-subtitle">الأرباح والعمولات</p>
                 </div>
 
                 <!-- 7. التسويق والإعدادات -->
@@ -645,11 +718,72 @@
         <div id="view-finance" class="subview">
             <div class="subview-header">
                 <button class="btn-back" onclick="goHome()">⬅️ عودة للشبكة</button>
-                <div class="subview-title">💰 الإدارة المالية</div>
+                <div class="subview-title">💰 الإدارة المالية والتحاسب</div>
             </div>
+
+            <!-- فلاتر الفترة الزمنية -->
+            <div class="finance-period-tabs">
+                <div class="fp-tab active" onclick="setFinancePeriod('today', this)">اليوم</div>
+                <div class="fp-tab" onclick="setFinancePeriod('week', this)">هذا الأسبوع</div>
+                <div class="fp-tab" onclick="setFinancePeriod('month', this)">هذا الشهر</div>
+                <div class="fp-tab" onclick="setFinancePeriod('all', this)">كل الفترات</div>
+            </div>
+
+            <!-- كروت المؤشرات المالية الأربعة -->
+            <div class="finance-stat-grid">
+                <div class="f-card" style="border-right: 4px solid var(--primary);">
+                    <div class="f-card-label">💵 إجمالي المبيعات والطلبات</div>
+                    <div class="f-card-value" id="fin-sales">0 د.ع</div>
+                </div>
+                <div class="f-card" style="border-right: 4px solid var(--success);">
+                    <div class="f-card-label">💰 صافي أرباح المنظومة</div>
+                    <div class="f-card-value" id="fin-profit" style="color:var(--success);">0 د.ع</div>
+                </div>
+                <div class="f-card" style="border-right: 4px solid #0284c7;">
+                    <div class="f-card-label">🛵 مستحقات التوصيل</div>
+                    <div class="f-card-value" id="fin-delivery">0 د.ع</div>
+                </div>
+                <div class="f-card" style="border-right: 4px solid #d97706;">
+                    <div class="f-card-label">🏪 مستحقات المطاعم</div>
+                    <div class="f-card-value" id="fin-vendors">0 د.ع</div>
+                </div>
+            </div>
+
+            <!-- زر نسخ كشف الحساب -->
+            <button class="btn" style="background:#10b981; color:#fff; width:100%; margin-bottom:14px; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="copyFinanceReport()">
+                📋 نسخ تقرير الحسابات (لمشاركته في تيليجرام / واتساب)
+            </button>
+
+            <!-- كاش عهدة المندوبين -->
             <div class="panel-box">
-                <div style="font-size:13px; color:var(--text-muted); margin-bottom:6px;">أرباح التوصيل المتوقعة:</div>
-                <div style="font-size:24px; font-weight:900; color:var(--success);">0 دينار عراقي</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <b style="font-size:14px;">🛵 كاش عهدة المندوبين</b>
+                    <span style="font-size:11px; color:var(--text-muted);">تحصيل الكاش اليومي</span>
+                </div>
+                <div id="driversCashBox" style="font-size:13px; line-height:1.7;">
+                    <!-- يتم حسابه وتوليده برمجياً -->
+                </div>
+            </div>
+
+            <!-- كشف حساب العمليات والطلبات المسلمة -->
+            <div class="panel-box">
+                <b style="font-size:14px; display:block; margin-bottom:8px;">📑 كشف حساب الطلبات المكتملة</b>
+                <div class="finance-table-wrapper">
+                    <table class="f-table">
+                        <thead>
+                            <tr>
+                                <th>الطلب</th>
+                                <th>المواد</th>
+                                <th>التوصيل</th>
+                                <th>الربح</th>
+                                <th>الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody id="financeTableBody">
+                            <!-- صفوف الطلبات المحاسبية -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -911,17 +1045,200 @@
             }).join('');
         }
 
-        // تفاصيل ومعالجة الطلب
+        // تنسيق الأرقام والمبالغ بفواصل الآلاف
+        function formatMoney(num) {
+            return (Number(num) || 0).toLocaleString('en-US');
+        }
+
+        // ================= الإدارة المالية والتحاسب =================
+        let currentFinancePeriod = 'today';
+
+        function setFinancePeriod(period, el) {
+            currentFinancePeriod = period;
+            document.querySelectorAll('.fp-tab').forEach(t => t.classList.remove('active'));
+            if (el) el.classList.add('active');
+            renderFinance();
+        }
+
+        function renderFinance() {
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+            const startOfWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).getTime();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+            // تصفية الطلبات المكتملة
+            const completedOrders = allOrders.filter(o => ['completed', 'accepted'].includes(o.status));
+
+            // تصفية حسب الفترة المختارة
+            const periodOrders = completedOrders.filter(o => {
+                const t = o.timestamp || 0;
+                if (currentFinancePeriod === 'today') return t >= startOfToday;
+                if (currentFinancePeriod === 'week') return t >= startOfWeek;
+                if (currentFinancePeriod === 'month') return t >= startOfMonth;
+                return true; // all
+            });
+
+            // حساب المجاميع المالية
+            let totalSales = 0;
+            let totalProfit = 0;
+            let totalDelivery = 0;
+            let totalVendors = 0;
+
+            const driverBalances = {};
+
+            periodOrders.forEach(o => {
+                const item = parseFloat(o.itemPrice) || 0;
+                const delivery = parseFloat(o.deliveryFee) || 3000;
+                const commission = parseFloat(o.appCommission) || 1000;
+                const total = item + delivery;
+                const driverEarn = Math.max(0, delivery - commission);
+
+                totalSales += total;
+                totalProfit += commission;
+                totalDelivery += delivery;
+                totalVendors += item;
+
+                // تجميع حسابات المندوبين
+                const driver = o.assignedDriver || 'مندوب عام';
+                if (!driverBalances[driver]) {
+                    driverBalances[driver] = { count: 0, cashInHand: 0, driverEarn: 0, dueToApp: 0 };
+                }
+                driverBalances[driver].count += 1;
+                driverBalances[driver].cashInHand += total; // الكاش الذي استلمه المندوب من الزبون
+                driverBalances[driver].driverEarn += driverEarn; // استحقاق المندوب
+                driverBalances[driver].dueToApp += (total - driverEarn); // المطلوب توريده للمنظومة
+            });
+
+            // تحديث بطاقات الإحصاء المالي
+            const finSalesEl = document.getElementById('fin-sales');
+            if (finSalesEl) finSalesEl.innerText = formatMoney(totalSales) + ' د.ع';
+            const finProfitEl = document.getElementById('fin-profit');
+            if (finProfitEl) finProfitEl.innerText = formatMoney(totalProfit) + ' د.ع';
+            const finDeliveryEl = document.getElementById('fin-delivery');
+            if (finDeliveryEl) finDeliveryEl.innerText = formatMoney(totalDelivery) + ' د.ع';
+            const finVendorsEl = document.getElementById('fin-vendors');
+            if (finVendorsEl) finVendorsEl.innerText = formatMoney(totalVendors) + ' د.ع';
+
+            // تحديث نص كارت المالية في الشبكة الرئيسية (أرباح اليوم)
+            const todayProfit = completedOrders
+                .filter(o => (o.timestamp || 0) >= startOfToday)
+                .reduce((acc, o) => acc + (parseFloat(o.appCommission) || 1000), 0);
+            const gridFinSub = document.getElementById('grid-finance-subtitle');
+            if (gridFinSub) {
+                gridFinSub.innerText = todayProfit > 0 ? `أرباح اليوم: ${formatMoney(todayProfit)} د.ع` : 'الأرباح والعمولات';
+                if (todayProfit > 0) gridFinSub.style.color = 'var(--success)';
+            }
+
+            // تحديث جدول كشف حساب الطلبات
+            const tableBody = document.getElementById('financeTableBody');
+            if (tableBody) {
+                if (periodOrders.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">لا توجد طلبات مكتملة في هذه الفترة</td></tr>`;
+                } else {
+                    tableBody.innerHTML = periodOrders.map(o => {
+                        const item = parseFloat(o.itemPrice) || 0;
+                        const delivery = parseFloat(o.deliveryFee) || 3000;
+                        const commission = parseFloat(o.appCommission) || 1000;
+                        const total = item + delivery;
+                        return `
+                        <tr>
+                            <td><b>${o.orderCode}</b><br><small style="color:var(--text-muted);">${o.customerName}</small></td>
+                            <td>${formatMoney(item)}</td>
+                            <td>${formatMoney(delivery)}</td>
+                            <td style="color:var(--success); font-weight:bold;">${formatMoney(commission)}</td>
+                            <td style="font-weight:bold;">${formatMoney(total)}</td>
+                        </tr>`;
+                    }).join('');
+                }
+            }
+
+            // تحديث كاش عهدة المندوبين
+            const driversBox = document.getElementById('driversCashBox');
+            if (driversBox) {
+                const driverNames = Object.keys(driverBalances);
+                if (driverNames.length === 0) {
+                    driversBox.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:10px;">لا توجد طلبات مسلمة من الكباتن حالياً</div>`;
+                } else {
+                    driversBox.innerHTML = driverNames.map(dName => {
+                        const d = driverBalances[dName];
+                        return `
+                        <div style="background:#f8fafc; border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:8px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <b>🛵 ${dName}</b>
+                                <span style="font-size:11px; background:#e2e8f0; padding:2px 8px; border-radius:10px;">${d.count} توصيلات</span>
+                            </div>
+                            <div style="margin-top:6px; font-size:12px; color:var(--text-main); display:flex; justify-content:space-between;">
+                                <span>الكاش المستلم باليد: <b>${formatMoney(d.cashInHand)} د.ع</b></span>
+                                <span>حصته: <b style="color:#0284c7;">${formatMoney(d.driverEarn)} د.ع</b></span>
+                            </div>
+                            <div style="margin-top:6px; font-size:13px; color:var(--danger); display:flex; justify-content:space-between; align-items:center;">
+                                <span>المطلوب توريده للإدارة: <b>${formatMoney(d.dueToApp)} د.ع</b></span>
+                                <button class="btn btn-success" style="padding:4px 10px; font-size:11px;" onclick="alert('✅ تم تسجيل توريد مبلغ ${formatMoney(d.dueToApp)} د.ع من ${dName}')">تسوية العهدة</button>
+                            </div>
+                        </div>`;
+                    }).join('');
+                }
+            }
+        }
+
+        // نسخ تقرير الحسابات لمشاركته
+        function copyFinanceReport() {
+            const periodNames = { 'today': 'اليوم', 'week': 'هذا الأسبوع', 'month': 'هذا الشهر', 'all': 'كل الفترات' };
+            const sales = document.getElementById('fin-sales')?.innerText || '0';
+            const profit = document.getElementById('fin-profit')?.innerText || '0';
+            const delivery = document.getElementById('fin-delivery')?.innerText || '0';
+            const vendors = document.getElementById('fin-vendors')?.innerText || '0';
+
+            const report = `📊 *كشف الحساب المالي للمنظومة*
+👑 *بإشراف حسين أثير*
+📅 الفترة: ${periodNames[currentFinancePeriod] || 'اليوم'}
+━━━━━━━━━━━━━━━━━━
+💵 إجمالي المبيعات والطلبات: ${sales}
+💰 صافي أرباح المنظومة: ${profit}
+🛵 مستحقات التوصيل: ${delivery}
+🏪 مستحقات المطاعم: ${vendors}
+━━━━━━━━━━━━━━━━━━
+✅ تم استخراج التقرير بنجاح من لوحة الإدارة.`;
+
+            navigator.clipboard.writeText(report).then(() => {
+                alert("✅ تم نسخ تقرير الحسابات بنجاح!\nيمكنك الآن لصقه وإرساله مباشرة في تيليجرام أو واتساب.");
+            }).catch(() => {
+                alert(report);
+            });
+        }
+
+        // ================= تفاصيل ومعالجة وتعديل الطلب =================
         function openModal(order) {
             selectedOrderId = order.firebaseId;
             const modal = document.getElementById('orderModal');
+            
+            const item = parseFloat(order.itemPrice) || 0;
+            const delivery = parseFloat(order.deliveryFee) || 3000;
+            const commission = parseFloat(order.appCommission) || 1000;
+            const total = item + delivery;
+
             document.getElementById('modalContent').innerHTML = `
-                <b>رقم الطلب:</b> <span style="color:var(--primary);">${order.orderCode}</span> <br>
+                <b>رقم الطلب:</b> <span style="color:var(--primary); font-weight:900;">${order.orderCode}</span> <br>
                 <b>العميل:</b> ${order.customerName} <br>
-                <b>رقم الهاتف:</b> ${order.phone} <br>
+                <b>رقم الهاتف:</b> <a href="tel:${order.phone}" style="color:var(--primary); font-weight:bold;">${order.phone}</a> <br>
                 <b>العنوان:</b> ${order.location} <br>
-                <div style="background:#f8fafc; padding:10px; border-radius:10px; margin-top:8px; border:1px solid #e2e8f0;">
+                <div style="background:#f8fafc; padding:10px; border-radius:10px; margin:8px 0; border:1px solid #e2e8f0;">
                     <b>عناصر الطلب:</b><br>${(order.details||'').replace(/\n/g, '<br>')}
+                </div>
+                <!-- تفاصيل الحسابات والفاتورة -->
+                <div style="background:rgba(67, 24, 255, 0.05); padding:10px; border-radius:10px; border:1px solid var(--primary-light); font-size:12px; line-height:1.7;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>قيمة المواد/الوجبات:</span> <b>${formatMoney(item)} د.ع</b>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>أجرة التوصيل:</span> <b>${formatMoney(delivery)} د.ع</b>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; color:var(--success);">
+                        <span>عمولة المنظومة:</span> <b>${formatMoney(commission)} د.ع</b>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:900; margin-top:4px; padding-top:4px; border-top:1px dashed #cbd5e1; color:var(--primary);">
+                        <span>المطلوب تحصيله كاش:</span> <span>${formatMoney(total)} د.ع</span>
+                    </div>
                 </div>
             `;
             modal.style.display = 'flex';
@@ -933,13 +1250,18 @@
 
         async function processOrder(newStatus) {
             if (!selectedOrderId) return;
+            const driverSelect = document.getElementById('driverSelect');
+            const driverName = driverSelect.options[driverSelect.selectedIndex].text;
             closeModal();
 
             try {
                 await fetch(`${DB_URL}/orders/${selectedOrderId}.json`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: newStatus })
+                    body: JSON.stringify({ 
+                        status: newStatus,
+                        assignedDriver: driverName
+                    })
                 });
 
                 fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -947,7 +1269,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         chat_id: ADMIN_ID,
-                        text: `🔄 <b>تحديث طلب:</b> تغيرت الحالة إلى <b>${newStatus}</b>.`
+                        text: `🔄 <b>تحديث طلب:</b> تغيرت الحالة إلى <b>${newStatus}</b>\n🛵 المندوب: ${driverName}`
                     })
                 }).catch(()=>{});
 
@@ -984,24 +1306,46 @@
             const order = allOrders.find(o => o.firebaseId === selectedOrderId);
             if(!order) return;
             
+            const item = order.itemPrice !== undefined ? order.itemPrice : 10000;
+            const delivery = order.deliveryFee !== undefined ? order.deliveryFee : 3000;
+            const commission = order.appCommission !== undefined ? order.appCommission : 1000;
+
             document.getElementById('modalContent').innerHTML = `
                 <div style="display:flex; flex-direction:column; gap:8px;">
                     <label><b>اسم العميل:</b></label>
-                    <input type="text" id="editName" value="${order.customerName}" style="padding:10px; border-radius:10px; border:1px solid #ccc; font-size:13px;">
+                    <input type="text" id="editName" value="${order.customerName}" style="padding:8px 10px; border-radius:10px; border:1px solid #ccc; font-size:13px;">
                     
                     <label><b>رقم الهاتف:</b></label>
-                    <input type="text" id="editPhone" value="${order.phone}" style="padding:10px; border-radius:10px; border:1px solid #ccc; font-size:13px;">
+                    <input type="text" id="editPhone" value="${order.phone}" style="padding:8px 10px; border-radius:10px; border:1px solid #ccc; font-size:13px;">
                     
                     <label><b>العنوان:</b></label>
-                    <input type="text" id="editLoc" value="${order.location}" style="padding:10px; border-radius:10px; border:1px solid #ccc; font-size:13px;">
+                    <input type="text" id="editLoc" value="${order.location}" style="padding:8px 10px; border-radius:10px; border:1px solid #ccc; font-size:13px;">
                     
-                    <label><b>تفاصيل الفاتورة:</b></label>
-                    <textarea id="editDetails" rows="3" style="padding:10px; border-radius:10px; border:1px solid #ccc; font-size:13px;">${order.details}</textarea>
+                    <label><b>تفاصيل الفاتورة والمواد:</b></label>
+                    <textarea id="editDetails" rows="2" style="padding:8px 10px; border-radius:10px; border:1px solid #ccc; font-size:13px;">${order.details}</textarea>
+
+                    <div style="background:#f1f5f9; padding:10px; border-radius:12px; margin-top:6px;">
+                        <b style="display:block; margin-bottom:6px; font-size:13px; color:var(--primary);">💰 الحسابات والتسعير:</b>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                            <div>
+                                <label style="font-size:11px;">سعر المواد (د.ع):</label>
+                                <input type="number" id="editItemPrice" value="${item}" style="width:100%; padding:6px; border-radius:8px; border:1px solid #cbd5e1; font-weight:bold;">
+                            </div>
+                            <div>
+                                <label style="font-size:11px;">أجرة التوصيل (د.ع):</label>
+                                <input type="number" id="editDeliveryFee" value="${delivery}" style="width:100%; padding:6px; border-radius:8px; border:1px solid #cbd5e1; font-weight:bold;">
+                            </div>
+                        </div>
+                        <div style="margin-top:6px;">
+                            <label style="font-size:11px;">عمولة المنظومة/التطبيق (د.ع):</label>
+                            <input type="number" id="editCommission" value="${commission}" style="width:100%; padding:6px; border-radius:8px; border:1px solid #cbd5e1; font-weight:bold; color:var(--success);">
+                        </div>
+                    </div>
                 </div>
             `;
             
             document.getElementById('editBtnGroup').innerHTML = `
-                <button class="btn btn-success" style="width: 100%;" onclick="saveOrderEdit()">💾 حفظ التعديلات</button>
+                <button class="btn btn-success" style="width: 100%;" onclick="saveOrderEdit()">💾 حفظ التعديلات والحسابات</button>
             `;
         }
 
@@ -1011,6 +1355,9 @@
             const newPhone = document.getElementById('editPhone').value;
             const newLoc = document.getElementById('editLoc').value;
             const newDetails = document.getElementById('editDetails').value;
+            const newItemPrice = parseFloat(document.getElementById('editItemPrice').value) || 0;
+            const newDeliveryFee = parseFloat(document.getElementById('editDeliveryFee').value) || 3000;
+            const newCommission = parseFloat(document.getElementById('editCommission').value) || 1000;
 
             try {
                 await fetch(`${DB_URL}/orders/${selectedOrderId}.json`, {
@@ -1020,7 +1367,10 @@
                         customerName: newName,
                         phone: newPhone,
                         location: newLoc,
-                        details: newDetails
+                        details: newDetails,
+                        itemPrice: newItemPrice,
+                        deliveryFee: newDeliveryFee,
+                        appCommission: newCommission
                     })
                 });
                 closeModal();
@@ -1030,6 +1380,7 @@
             }
         }
 
+        // تحديث البيانات مع الحسابات تلقائياً
         fetchOrders();
         setInterval(fetchOrders, 2500);
     </script>
