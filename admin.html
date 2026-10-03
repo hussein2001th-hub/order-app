@@ -3,256 +3,747 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>النظام الشامل لإدارة التوصيل</title>
+    <title>لوحة الإدارة - حسين أثير</title>
+    
+    <!-- PWA Settings -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#111c44">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="الإدارة">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/png" href="icon-192.png">
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --bg-body: #f4f7fe;
-            --bg-sidebar: #111c44;
-            --text-sidebar: #a3aed1;
-            --active-sidebar: #ffffff;
-            --bg-card: #ffffff;
-            --text-main: #2b3674;
-            --text-muted: #a3aed1;
+            --header-bg: #111c44;
             --primary: #4318ff;
+            --primary-light: #ece8ff;
+            --card-bg: #ffffff;
+            --text-main: #1b2559;
+            --text-muted: #8f9bba;
             --success: #05cd99;
             --danger: #ee5d50;
-            --warning: #ffce20;
+            --warning: #ffb547;
             --border: #e2e8f0;
         }
 
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Cairo", Tahoma, sans-serif; margin: 0; padding: 0; }
         
-        body { background-color: var(--bg-body); display: flex; height: 100vh; overflow: hidden; color: var(--text-main); }
-
-        /* 1. القائمة الجانبية (Sidebar) */
-        .sidebar {
-            width: 260px; background: var(--bg-sidebar); color: var(--text-sidebar);
-            display: flex; flex-direction: column; transition: 0.3s; z-index: 100;
+        body { 
+            background-color: var(--bg-body); 
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 30px;
+            -webkit-tap-highlight-color: transparent;
         }
-        .sidebar-header { padding: 24px; font-size: 22px; font-weight: 900; color: #fff; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .nav-items { flex: 1; padding: 20px 0; overflow-y: auto; }
-        .nav-item {
-            padding: 15px 24px; display: flex; align-items: center; gap: 12px;
-            cursor: pointer; transition: 0.2s; font-size: 15px; font-weight: 600;
+
+        /* رأس الصفحة العلوي للموبايل */
+        .mobile-header {
+            background: linear-gradient(135deg, #0b1437 0%, #111c44 100%);
+            color: #fff;
+            padding: 20px 18px 24px;
+            border-bottom-left-radius: 26px;
+            border-bottom-right-radius: 26px;
+            box-shadow: 0 10px 25px rgba(17, 28, 68, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        .nav-item:hover, .nav-item.active { color: var(--active-sidebar); background: rgba(255,255,255,0.05); border-right: 4px solid var(--primary); }
 
-        /* 2. الإطار الرئيسي والشريط العلوي (Top Bar) */
-        .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .topbar {
-            background: var(--bg-card); padding: 15px 30px; display: flex; justify-content: space-between;
-            align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.02); z-index: 10;
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
         }
-        .search-box {
-            background: var(--bg-body); border-radius: 20px; padding: 10px 20px; display: flex; align-items: center; gap: 10px; width: 350px;
+
+        .brand-info h1 {
+            font-size: 19px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .search-box input { border: none; background: none; outline: none; width: 100%; font-size: 14px; }
-        
-        .topbar-actions { display: flex; align-items: center; gap: 20px; }
-        .notification-bell { position: relative; font-size: 22px; cursor: pointer; }
-        .bell-dot {
-            position: absolute; top: -2px; right: -2px; background: var(--danger); width: 10px; height: 10px;
-            border-radius: 50%; display: none; animation: pulse-danger 1.5s infinite;
+
+        .brand-info span {
+            font-size: 12px;
+            color: var(--warning);
+            font-weight: 600;
+            display: block;
+            margin-top: 3px;
         }
-        @keyframes pulse-danger { 0% {box-shadow: 0 0 0 0 rgba(238,93,80,0.7);} 70% {box-shadow: 0 0 0 8px rgba(238,93,80,0);} 100% {box-shadow: 0 0 0 0 rgba(238,93,80,0);} }
-        .profile-btn { display: flex; align-items: center; gap: 10px; font-weight: bold; cursor: pointer; }
-        .profile-img { width: 40px; height: 40px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
-        /* 3. منطقة المحتوى (Content) */
-        .content { padding: 30px; flex: 1; overflow-y: auto; }
-        .view-section { display: none; animation: fadeIn 0.3s ease; }
-        .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-        /* 4. لوحة القيادة (Dashboard) */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
-        .stat-card { background: var(--bg-card); padding: 24px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); display: flex; align-items: center; gap: 16px; }
-        .stat-icon { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        .stat-info h3 { margin: 0; font-size: 13px; color: var(--text-muted); }
-        .stat-info p { margin: 4px 0 0; font-size: 24px; font-weight: 900; }
+        .btn-install-quick {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.25);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
 
-        .dashboard-row { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-        .panel { background: var(--bg-card); padding: 24px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
-        .panel-header { font-size: 18px; font-weight: 800; margin-bottom: 20px; display: flex; justify-content: space-between; }
-        
-        .map-placeholder { background: #e2e8f0; height: 300px; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: bold; position: relative; overflow: hidden; }
-        .map-pin { position: absolute; font-size: 24px; animation: bounce 2s infinite; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .bell-btn {
+            position: relative;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #fff;
+            cursor: pointer;
+        }
 
-        /* 5. إدارة الطلبات (Orders Management) */
-        .order-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; overflow-x: auto; }
-        .o-tab { padding: 10px 18px; font-weight: 700; color: var(--text-muted); cursor: pointer; border-radius: 10px; transition: 0.2s; white-space: nowrap; }
-        .o-tab.active { background: var(--primary); color: white; }
+        .bell-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: var(--danger);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 900;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #111c44;
+            animation: pulse-ring 1.5s infinite;
+        }
 
-        .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
-        .order-card { background: var(--bg-card); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid var(--border); position: relative; }
-        .o-header { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
-        .o-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; }
-        .o-body { font-size: 14px; line-height: 1.7; margin-bottom: 15px; }
-        .o-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn { padding: 12px; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; color: white; transition: 0.1s; }
-        .btn:active { transform: scale(0.95); }
-        .btn-primary { background: var(--primary); }
-        .btn-success { background: var(--success); }
-        .btn-danger { background: var(--danger); }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.9); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(0.9); }
+        }
+
+        /* شريط ملخص الأرقام السريع في الرأس */
+        .quick-stats-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 10px 12px;
+            border-radius: 16px;
+            backdrop-filter: blur(8px);
+        }
+
+        .quick-stat-item {
+            text-align: center;
+        }
+
+        .quick-stat-item:not(:last-child) {
+            border-left: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .quick-stat-title {
+            font-size: 11px;
+            color: #a3aed1;
+            margin-bottom: 2px;
+        }
+
+        .quick-stat-val {
+            font-size: 16px;
+            font-weight: 900;
+            color: #fff;
+        }
+
+        /* حاوية الصفحات */
+        .container {
+            padding: 18px 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* ================= شبكة الأقسام الرئيسية (Grid Menu) ================= */
+        .menu-grid-title {
+            font-size: 15px;
+            font-weight: 800;
+            margin: 8px 4px 14px;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .grid-menu {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .grid-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 18px 14px;
+            text-align: center;
+            box-shadow: 0 4px 18px rgba(112, 144, 176, 0.12);
+            border: 1px solid rgba(226, 232, 240, 0.7);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 125px;
+        }
+
+        .grid-card:active {
+            transform: scale(0.96);
+            background: #f8fafc;
+        }
+
+        .grid-icon-box {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            margin-bottom: 10px;
+        }
+
+        .grid-card h3 {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 3px;
+        }
+
+        .grid-card p {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .grid-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: var(--danger);
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 12px;
+            display: none;
+        }
+
+        /* شاشات الأقسام الفرعية */
+        .subview {
+            display: none;
+            animation: slideUp 0.25s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .subview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            background: #fff;
+            padding: 12px 16px;
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+
+        .btn-back {
+            background: var(--primary-light);
+            color: var(--primary);
+            border: none;
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .subview-title {
+            font-size: 16px;
+            font-weight: 900;
+            color: var(--text-main);
+        }
+
+        /* تبويبات حالات الطلبات */
+        .order-tabs-scroll {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 14px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .order-tabs-scroll::-webkit-scrollbar { display: none; }
+
+        .o-tab {
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--text-muted);
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .o-tab.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        /* بطاقات الطلبات داخل إدارة الطلبات */
+        .orders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .order-card {
+            background: #fff;
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: 0 4px 15px rgba(112, 144, 176, 0.08);
+            border: 1px solid var(--border);
+            border-right: 5px solid var(--warning);
+        }
+
+        .o-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .o-code { font-weight: 900; color: var(--primary); font-size: 14px; }
+        .o-time { font-size: 11px; color: var(--text-muted); }
+        .o-badge { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; }
+
+        .o-info {
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .o-items {
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 8px;
+            font-size: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-manage-order {
+            width: 100%;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        /* لوحات المحتوى الأخرى */
+        .panel-box {
+            background: #fff;
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 4px 15px rgba(112, 144, 176, 0.08);
+            margin-bottom: 14px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 800;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-success { background: var(--success); color: #fff; }
         .btn-warning { background: var(--warning); color: #000; }
 
-        /* 6. جداول البيانات (Tables for Vendors, Drivers, etc) */
-        .data-table { width: 100%; border-collapse: collapse; }
-        .data-table th, .data-table td { text-align: right; padding: 15px; border-bottom: 1px solid var(--border); font-size: 14px; }
-        .data-table th { color: var(--text-muted); font-weight: 700; }
-        .data-table tr:hover { background: var(--bg-body); }
+        /* نافذة تفاصيل ومعالجة الطلب (Modal) */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(17, 28, 68, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 1000;
+        }
 
-        /* Modal تفاصيل الطلب وتعيين المندوب */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal { background: var(--bg-card); padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
-        .modal h2 { margin-top: 0; color: var(--text-main); }
-        .driver-select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; margin: 15px 0; font-size: 15px; outline: none; }
+        .modal {
+            background: #fff;
+            width: 100%;
+            max-width: 520px;
+            border-top-left-radius: 26px;
+            border-top-right-radius: 26px;
+            padding: 24px 20px;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: slideSheet 0.25s ease-out;
+        }
+
+        @keyframes slideSheet {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 16px 0 10px;
+        }
     </style>
 </head>
 <body>
 
-    <!-- القائمة الجانبية -->
-    <aside class="sidebar">
-        <div class="sidebar-header">🚀 مدير المنظومة</div>
-        <div class="nav-items">
-            <div class="nav-item active" onclick="switchView('v-dashboard', this)">📊 لوحة القيادة</div>
-            <div class="nav-item" onclick="switchView('v-orders', this)">📦 إدارة الطلبات</div>
-            <div class="nav-item" onclick="switchView('v-vendors', this)">🏪 إدارة المطاعم</div>
-            <div class="nav-item" onclick="switchView('v-drivers', this)">🛵 إدارة المندوبين</div>
-            <div class="nav-item" onclick="switchView('v-customers', this)">👥 إدارة العملاء</div>
-            <div class="nav-item" onclick="switchView('v-finance', this)">💰 الإدارة المالية</div>
-            <div class="nav-item" onclick="switchView('v-settings', this)">⚙️ التسويق والإعدادات</div>
+    <!-- الشريط العلوي المخصص للموبايل -->
+    <header class="mobile-header">
+        <div class="header-top">
+            <div class="brand-info">
+                <h1>🚀 مدير المنظومة</h1>
+                <span>بإشراف حسين أثير</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn-install-quick" onclick="triggerInstall()">
+                    📲 تثبيت
+                </button>
+                <button class="bell-btn" onclick="openOrdersView()">
+                    🔔 <div class="bell-badge" id="bellBadge">0</div>
+                </button>
+            </div>
         </div>
-    </aside>
 
-    <div class="main-wrapper">
-        <!-- الشريط العلوي الشامل -->
-        <header class="topbar">
-            <div class="search-box">
-                🔍 <input type="text" placeholder="بحث شامل: رقم طلب، عميل، مندوب، مطعم...">
+        <!-- شريط الأرقام المباشرة السريع -->
+        <div class="quick-stats-bar">
+            <div class="quick-stat-item">
+                <div class="quick-stat-title">طلبات جديدة</div>
+                <div class="quick-stat-val" id="qs-pending" style="color: var(--warning);">0</div>
             </div>
-            <div class="topbar-actions">
-                <div class="notification-bell" onclick="alert('لا توجد إشعارات سابقة')">
-                    🔔 <div class="bell-dot" id="bellDot"></div>
-                </div>
-                <div class="profile-btn">
-                    <div class="profile-img">ح</div>
-                    الإدارة العليا
-                </div>
+            <div class="quick-stat-item">
+                <div class="quick-stat-title">قيد التوصيل</div>
+                <div class="quick-stat-val" id="qs-active" style="color: var(--primary-light);">0</div>
             </div>
-        </header>
+            <div class="quick-stat-item">
+                <div class="quick-stat-title">إجمالي اليوم</div>
+                <div class="quick-stat-val" id="qs-total" style="color: var(--success);">0</div>
+            </div>
+        </div>
+    </header>
 
-        <main class="content">
-            <!-- 1. لوحة القيادة -->
-            <div id="v-dashboard" class="view-section active">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: rgba(67,24,255,0.1); color: var(--primary);">📋</div>
-                        <div class="stat-info"><h3>إجمالي طلبات اليوم</h3><p id="st-total">0</p></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: rgba(255,206,32,0.1); color: #b28c00;">⚡</div>
-                        <div class="stat-info"><h3>قيد التنفيذ الآن</h3><p id="st-active">0</p></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: rgba(5,205,153,0.1); color: var(--success);">🛵</div>
-                        <div class="stat-info"><h3>مندوبين متاحين</h3><p>12</p></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: rgba(238,93,80,0.1); color: var(--danger);">💵</div>
-                        <div class="stat-info"><h3>المبيعات التقديرية</h3><p>0 د.ع</p></div>
-                    </div>
-                </div>
-
-                <div class="dashboard-row">
-                    <div class="panel">
-                        <div class="panel-header">📍 خريطة التتبع المباشر (Live Map)</div>
-                        <div class="map-placeholder">
-                            <div class="map-pin" style="top: 30%; left: 40%;">🛵</div>
-                            <div class="map-pin" style="top: 60%; left: 70%;">📍</div>
-                            <div class="map-pin" style="top: 50%; left: 50%;">🛵</div>
-                            (سيتم ربط الخريطة الحقيقية من Google Maps لاحقاً)
-                        </div>
-                    </div>
-                    <div class="panel">
-                        <div class="panel-header">أحدث الطلبات الواصلة</div>
-                        <div id="recentOrdersList" style="font-size: 14px;">جاري الجلب...</div>
-                    </div>
-                </div>
+    <div class="container">
+        
+        <!-- ================= 1. واجهة الشبكة الرئيسية (Grid View) ================= -->
+        <div id="view-home">
+            <div class="menu-grid-title">
+                <span>🎛️ لوحة الأقسام والتحكم</span>
+                <span style="font-size: 11px; color: var(--success); font-weight: 700;">🟢 النظام متصل ومباشر</span>
             </div>
 
-            <!-- 2. إدارة الطلبات (الأهم) -->
-            <div id="v-orders" class="view-section">
-                <div class="order-tabs">
-                    <div class="o-tab active" onclick="setOrderTab('pending', this)">جديدة 🆕</div>
-                    <div class="o-tab" onclick="setOrderTab('processing', this)">قيد التحضير 🍳</div>
-                    <div class="o-tab" onclick="setOrderTab('delivering', this)">في الطريق 🛵</div>
-                    <div class="o-tab" onclick="setOrderTab('completed', this)">مكتملة ✅</div>
-                    <div class="o-tab" onclick="setOrderTab('rejected', this)">ملغاة ❌</div>
+            <div class="grid-menu">
+                <!-- 1. إدارة الطلبات -->
+                <div class="grid-card" onclick="openView('view-orders')" style="border-right: 4px solid var(--primary);">
+                    <div class="grid-badge" id="badge-orders">0</div>
+                    <div class="grid-icon-box" style="background: rgba(67, 24, 255, 0.1); color: var(--primary);">📦</div>
+                    <h3>إدارة الطلبات</h3>
+                    <p id="grid-order-subtitle">عرض ومعالجة الطلبات</p>
                 </div>
-                <div class="orders-grid" id="ordersContainer">
-                    <!-- الطلبات هنا -->
+
+                <!-- 2. لوحة القيادة والإحصائيات -->
+                <div class="grid-card" onclick="openView('view-stats')">
+                    <div class="grid-icon-box" style="background: rgba(5, 205, 153, 0.1); color: var(--success);">📊</div>
+                    <h3>لوحة القيادة</h3>
+                    <p>الإحصائيات والتقارير</p>
+                </div>
+
+                <!-- 3. إدارة المطاعم -->
+                <div class="grid-card" onclick="openView('view-vendors')">
+                    <div class="grid-icon-box" style="background: rgba(255, 181, 71, 0.15); color: #d97706;">🏪</div>
+                    <h3>إدارة المطاعم</h3>
+                    <p>المتاجر وقوائم الطعام</p>
+                </div>
+
+                <!-- 4. إدارة المندوبين -->
+                <div class="grid-card" onclick="openView('view-drivers')">
+                    <div class="grid-icon-box" style="background: rgba(14, 165, 233, 0.1); color: #0284c7;">🛵</div>
+                    <h3>إدارة المندوبين</h3>
+                    <p>الكباتن ومحفظة الكاش</p>
+                </div>
+
+                <!-- 5. إدارة العملاء -->
+                <div class="grid-card" onclick="openView('view-customers')">
+                    <div class="grid-icon-box" style="background: rgba(168, 85, 247, 0.1); color: #7e22ce;">👥</div>
+                    <h3>إدارة العملاء</h3>
+                    <p>سجل بيانات الزبائن</p>
+                </div>
+
+                <!-- 6. الإدارة المالية -->
+                <div class="grid-card" onclick="openView('view-finance')">
+                    <div class="grid-icon-box" style="background: rgba(16, 185, 129, 0.1); color: #059669;">💰</div>
+                    <h3>الإدارة المالية</h3>
+                    <p>الأرباح والعمولات</p>
+                </div>
+
+                <!-- 7. التسويق والإعدادات -->
+                <div class="grid-card" onclick="openView('view-settings')">
+                    <div class="grid-icon-box" style="background: rgba(100, 116, 139, 0.1); color: #475569;">⚙️</div>
+                    <h3>التسويق والإعدادات</h3>
+                    <p>الكوبونات ومناطق التسعير</p>
+                </div>
+
+                <!-- 8. تصفير النظام -->
+                <div class="grid-card" onclick="clearAllOrders()" style="border-right: 4px solid var(--danger);">
+                    <div class="grid-icon-box" style="background: rgba(238, 93, 80, 0.1); color: var(--danger);">🗑️</div>
+                    <h3 style="color: var(--danger);">تصفير المنظومة</h3>
+                    <p>مسح الطلبات بالكامل</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 2. واجهة إدارة الطلبات (Orders View) ================= -->
+        <div id="view-orders" class="subview">
+            <div class="subview-header">
+                <button class="btn-back" onclick="goHome()">⬅️ عودة للشبكة</button>
+                <div class="subview-title">📦 إدارة وتتبع الطلبات</div>
+            </div>
+
+            <!-- شريط تصنيف الحالات -->
+            <div class="order-tabs-scroll">
+                <div class="o-tab active" onclick="setOrderTab('pending', this)">جديدة ⏳</div>
+                <div class="o-tab" onclick="setOrderTab('processing', this)">قيد التحضير 🍳</div>
+                <div class="o-tab" onclick="setOrderTab('delivering', this)">في الطريق 🛵</div>
+                <div class="o-tab" onclick="setOrderTab('completed', this)">مكتملة ✅</div>
+                <div class="o-tab" onclick="setOrderTab('rejected', this)">ملغاة ❌</div>
+            </div>
+
+            <!-- قائمة الطلبات الحية -->
+            <div class="orders-list" id="ordersContainer">
+                <!-- يتم تعبئة الطلبات ديناميكياً -->
+            </div>
+        </div>
+
+        <!-- ================= 3. واجهة الإحصائيات (Stats View) ================= -->
+        <div id="view-stats" class="subview">
+            <div class="subview-header">
+                <button class="btn-back" onclick="goHome()">⬅️ عودة للشبكة</button>
+                <div class="subview-title">📊 لوحة القيادة والأرقام</div>
+            </div>
+
+            <div class="panel-box">
+                <h3 style="margin-bottom: 12px; font-size: 15px;">ملخص نشاط المنظومة</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
+                    <div style="background:#f8fafc; padding: 14px; border-radius: 12px; border: 1px solid var(--border);">
+                        <div style="font-size:12px; color:var(--text-muted);">إجمالي الطلبات</div>
+                        <div id="stat-total-detail" style="font-size:22px; font-weight:900; color:var(--primary); margin-top:4px;">0</div>
+                    </div>
+                    <div style="background:#f8fafc; padding: 14px; border-radius: 12px; border: 1px solid var(--border);">
+                        <div style="font-size:12px; color:var(--text-muted);">المكتملة بنجاح</div>
+                        <div id="stat-completed-detail" style="font-size:22px; font-weight:900; color:var(--success); margin-top:4px;">0</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- 3. إدارة المتاجر -->
-            <div id="v-vendors" class="view-section">
-                <div class="panel">
-                    <div class="panel-header">إدارة المطاعم والمتاجر <button class="btn btn-primary" style="padding: 6px 15px;">+ إضافة متجر</button></div>
-                    <table class="data-table">
-                        <tr><th>الاسم</th><th>الحالة</th><th>التقييم</th><th>نسبة العمولة</th><th>التحكم</th></tr>
-                        <tr><td>مطعم برغر حسون</td><td><span style="color:var(--success)">مفتوح الآن</span></td><td>⭐ 4.8</td><td>15%</td><td><button class="btn btn-primary" style="padding:5px 10px;font-size:12px;">تعديل المنيو</button></td></tr>
-                        <tr><td>بيتزا إيطاليا</td><td><span style="color:var(--danger)">مغلق</span></td><td>⭐ 4.2</td><td>10%</td><td><button class="btn btn-primary" style="padding:5px 10px;font-size:12px;">تعديل المنيو</button></td></tr>
-                    </table>
+            <div class="panel-box">
+                <h3 style="margin-bottom: 10px; font-size: 15px;">📍 خريطة المندوبين المباشرة (Live Map)</h3>
+                <div style="height: 180px; background: #e2e8f0; border-radius: 14px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:13px; font-weight:bold;">
+                    🗺️ سيتم ربط الخريطة التفاعلية لاحقاً
                 </div>
             </div>
+        </div>
 
-            <!-- 4. المندوبين -->
-            <div id="v-drivers" class="view-section">
-                <div class="panel">
-                    <div class="panel-header">إدارة المندوبين والكباتن</div>
-                    <table class="data-table">
-                        <tr><th>الاسم</th><th>رقم الهاتف</th><th>المركبة</th><th>المحفظة (عليه/له)</th><th>الحالة</th></tr>
-                        <tr><td>أحمد الدراجي</td><td>0771234567</td><td>دراجة نارية (ب 123)</td><td>-15,000 د.ع (للتطبيق)</td><td><span style="color:var(--success)">متاح</span></td></tr>
-                        <tr><td>مصطفى علي</td><td>0781234567</td><td>سيارة (أ 987)</td><td>+5,000 د.ع (يطلبنا)</td><td><span style="color:var(--warning)">في توصيلة</span></td></tr>
-                    </table>
+        <!-- ================= 4. واجهة المطاعم (Vendors View) ================= -->
+        <div id="view-vendors" class="subview">
+            <div class="subview-header">
+                <button class="btn-back" onclick="goHome()">⬅️ عودة للشبكة</button>
+                <div class="subview-title">🏪 المتاجر وقوائم الطعام</div>
+            </div>
+            <div class="panel-box">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <b>المطاعم المسجلة (2)</b>
+                    <button class="btn" style="background:var(--primary); color:#fff; padding:6px 12px; font-size:12px;">+ إضافة متجر</button>
                 </div>
+                <div style="border-bottom:1px solid #f1f5f9; padding: 10px 0;">
+                    <b>🍔 مطعم برغر حسون</b>
+                    <div style="font-size:12px; color:var(--success);">مفتوح الآن • عمولة 15%</div>
+                </div>
+                <div style="padding: 10px 0;">
+                    <b>🍕 بيتزا إيطاليا</b>
+                    <div style="font-size:12px; color:var(--danger);">مغلق حالياً • عمولة 10%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 5. واجهة المندوبين (Drivers View) ================= -->
+        <div id="view-drivers" class="subview">
+            <div class="subview-header">
+                <button class="btn-back" onclick="goHome()">⬅️ عودة للشبكة</button>
+                <div class="subview-title">🛵 الكباتن والمندوبين</div>
+            </div>
+            <div class="panel-box">
+                <div style="border-bottom:1px solid #f1f5f9; padding: 10px 0;">
+                    <b>أحمد الدراجي (دراجة نارية)</b>
+                    <div style="font-size:12px; color:var(--text-muted);">📞 0771234567 | الحالة: <span style="color:var(--success)">متاح</span></div>
+                </div>
+                <div style="padding: 10px 0;">
+                    <b>مصطفى علي (سيارة)</b>
+                    <div style="font-size:12px; color:var(--text-muted);">📞 0781234567 | الحالة: <span style="color:var(--warning)">في توصيلة</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 6. واجهة العملاء (Customers View) ================= -->
+        <div id="view-customers" class="subview">
+            <div class="subview-header">
+                <button class="btn-back" onclick="goHome()">⬅️ عودة للشبكة</button>
+                <div class="subview-title">👥 سجل العملاء</div>
+            </div>
+            <div class="panel-box">
+                <p style="font-size:13px; color:var(--text-muted);">يتم تسجيل وتخزين العملاء الذين قاموا بالطلب تلقائياً مع أرقام هواتفهم وعناوينهم المتكررة.</p>
+            </div>
+        </div>
+
+        <!-- ================= 7. واجهة المالية (Finance View) ================= -->
+        <div id="view-finance" class="subview">
+            <div class="subview-header">
+                <button class="btn-back" onclick="goHome()">⬅️ عودة للشبكة</button>
+                <div class="subview-title">💰 الإدارة المالية</div>
+            </div>
+            <div class="panel-box">
+                <div style="font-size:13px; color:var(--text-muted); margin-bottom:6px;">أرباح التوصيل المتوقعة:</div>
+                <div style="font-size:24px; font-weight:900; color:var(--success);">0 دينار عراقي</div>
+            </div>
+        </div>
+
+        <!-- ================= 8. واجهة الإعدادات والتسويق (Settings View) ================= -->
+        <div id="view-settings" class="subview">
+            <div class="subview-header">
+                <button class="btn-back" onclick="goHome()">⬅️ عودة للشبكة</button>
+                <div class="subview-title">⚙️ التسويق والإعدادات</div>
             </div>
             
-            <!-- الصفحات الأخرى (مجرد واجهات أولية جاهزة للربط مستقبلا) -->
-            <div id="v-customers" class="view-section"><div class="panel"><h3>إدارة العملاء</h3><p>قائمة العملاء، سجل طلباتهم، وحظر المزعجين.</p></div></div>
-            <div id="v-finance" class="view-section"><div class="panel"><h3>الإدارة المالية</h3><p>تقارير الأرباح وتصفية الحسابات مع المطاعم والمندوبين.</p></div></div>
-            <div id="v-settings" class="view-section"><div class="panel"><h3>الإعدادات والتسويق</h3><p>إنشاء كوبونات خصم (Promo Codes)، وتحديد مناطق التسعير وإرسال الإشعارات الجماعية.</p></div></div>
-        </main>
+            <div class="panel-box" style="border: 2px solid var(--primary); background: #fbfbfe;">
+                <h4 style="color: var(--primary); margin-bottom: 6px;">📲 تثبيت لوحة الإدارة كتطبيق</h4>
+                <p style="font-size: 12px; color: var(--text-main); margin-bottom: 12px;">
+                    يمكنك تثبيت هذه اللوحة كتطبيق مستقل يعمل بشاشة كاملة وبدون متصفح على جهازك:
+                </p>
+                <button class="btn" style="background:var(--primary); color:#fff; width:100%;" onclick="triggerInstall()">
+                    📲 تثبيت على الشاشة الرئيسية الآن
+                </button>
+            </div>
+
+            <div class="panel-box" style="border: 1px solid var(--danger);">
+                <h4 style="color: var(--danger); margin-bottom: 6px;">⚠️ منطقة الخطر</h4>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                    مسح كافة بيانات الطلبات الحالية وتصفير العدادات نهائياً:
+                </p>
+                <button class="btn btn-danger" style="width:100%;" onclick="clearAllOrders()">
+                    🗑️ تصفير النظام بالكامل
+                </button>
+            </div>
+        </div>
+
     </div>
 
-    <!-- نافذة منبثقة لمعالجة الطلب (Modal) -->
+    <!-- نافذة منبثقة لمعالجة وتعديل الطلب (Modal Sheet) -->
     <div class="modal-overlay" id="orderModal">
         <div class="modal">
-            <h2>تفاصيل الطلب ومعالجته</h2>
-            <div id="modalContent" style="margin: 20px 0; font-size: 14px; line-height: 1.8;"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                <h3 style="font-size: 16px;">معالجة وتفاصيل الطلب</h3>
+                <button onclick="closeModal()" style="border:none; background:#f1f5f9; width:30px; height:30px; border-radius:50%; font-weight:900; cursor:pointer;">✕</button>
+            </div>
             
-            <label style="font-weight: bold;">تعيين مندوب التوصيل (Assign Driver):</label>
-            <select class="driver-select" id="driverSelect">
-                <option value="auto">تعيين تلقائي (Auto-Assign لأقرب مندوب)</option>
-                <option value="ahmed">أحمد الدراجي (يبعد 1 كم)</option>
-                <option value="mustafa">مصطفى علي (يبعد 3 كم)</option>
+            <div id="modalContent" style="font-size: 13px; line-height: 1.8; margin-bottom: 15px;"></div>
+            
+            <label style="font-weight: 800; font-size: 12px; display:block; margin-bottom:6px;">تعيين مندوب التوصيل (Assign Driver):</label>
+            <select id="driverSelect" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 14px; font-size:13px; outline:none;">
+                <option value="auto">تعيين تلقائي (لأقرب مندوب متاح)</option>
+                <option value="ahmed">أحمد الدراجي (دراجة نارية)</option>
+                <option value="mustafa">مصطفى علي (سيارة)</option>
             </select>
 
-            <div class="o-actions" style="margin-top: 20px;">
-                <button class="btn btn-warning" onclick="processOrder('processing')">👨‍🍳 إرسال للمطعم (قيد التحضير)</button>
-                <button class="btn btn-primary" onclick="processOrder('delivering')">🛵 تعيين المندوب (في الطريق)</button>
-                <button class="btn btn-success" onclick="processOrder('completed')">✅ تم التوصيل بنجاح</button>
+            <div class="modal-actions-grid">
+                <button class="btn btn-warning" onclick="processOrder('processing')">👨‍🍳 قيد التحضير</button>
+                <button class="btn" style="background:var(--primary); color:#fff;" onclick="processOrder('delivering')">🛵 في الطريق</button>
+                <button class="btn btn-success" onclick="processOrder('completed')">✅ تم التوصيل</button>
                 <button class="btn btn-danger" onclick="processOrder('rejected')">❌ إلغاء الطلب</button>
             </div>
-            <button class="btn" style="background:#64748b; width: 100%; margin-top:10px;" onclick="document.getElementById('orderModal').style.display='none'">إغلاق</button>
+
+            <div id="editBtnGroup" style="display: flex; gap: 8px; margin-top: 10px;">
+                <button class="btn" style="background: #3b82f6; color:#fff; flex:1;" onclick="editOrder()">✏️ تعديل البيانات</button>
+                <button class="btn btn-danger" style="background: #94a3b8; flex:1;" onclick="deleteOrder()">🗑️ مسح الطلب</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // إعدادات البوت والفايربيز
+        // إعدادات تيليجرام
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            try { tg.expand(); tg.ready(); tg.setHeaderColor('#111c44'); } catch(e){}
+        }
+
+        // تسجيل Service Worker للتثبيت كـ PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(() => {});
+            });
+        }
+
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+
+        function triggerInstall() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+            } else {
+                alert("📲 لتثبيت التطبيق على شاشة هاتفك:\n\n• في متصفح Chrome: اضغط زر الخيارات (⋮) واختر 'تثبيت التطبيق' أو 'إضافة إلى الشاشة الرئيسية'.\n• في Safari (آيفون): اضغط زر المشاركة (Share) في الأسفل ثم اختر 'إضافة إلى الشاشة الرئيسية'.");
+            }
+        }
+
+        // إعدادات فايربيز وتيليجرام
         const DB_URL = "https://orders-2f629-default-rtdb.firebaseio.com";
         const BOT_TOKEN = "8605127523:AAEfSS1SmxWuhKrOsJELYpBOsnjhYuZ2_sI";
         const ADMIN_ID = "7016438694";
@@ -263,15 +754,25 @@
         let isFirstLoad = true;
         let selectedOrderId = null;
 
-        // التنقل بين الأقسام
-        function switchView(viewId, el) {
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
-            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
+        // إدارة التنقل بين الشاشات
+        function openView(viewId) {
+            document.getElementById('view-home').style.display = 'none';
+            document.querySelectorAll('.subview').forEach(v => v.style.display = 'none');
+            document.getElementById(viewId).style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // التنقل بين حالات الطلبات
+        function goHome() {
+            document.querySelectorAll('.subview').forEach(v => v.style.display = 'none');
+            document.getElementById('view-home').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openOrdersView() {
+            openView('view-orders');
+        }
+
+        // فلترة حالات الطلبات
         function setOrderTab(status, el) {
             currentStatusTab = status;
             document.querySelectorAll('.o-tab').forEach(t => t.classList.remove('active'));
@@ -279,13 +780,19 @@
             renderOrders();
         }
 
+        // جلب الطلبات من السيرفر لحظياً
         async function fetchOrders() {
             try {
                 const res = await fetch(`${DB_URL}/orders.json`);
                 if (!res.ok) return;
                 const data = await res.json();
                 
-                if (!data) { allOrders = []; updateDashboard(); return; }
+                if (!data) { 
+                    allOrders = []; 
+                    updateDashboardCounts(); 
+                    renderOrders(); 
+                    return; 
+                }
 
                 const ordersList = Object.keys(data).map(key => ({ firebaseId: key, ...data[key] }));
                 ordersList.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
@@ -294,7 +801,6 @@
                     ordersList.forEach(o => {
                         if (!knownIds.has(o.firebaseId) && o.status === 'pending') {
                             playRing();
-                            document.getElementById('bellDot').style.display = 'block'; // تنشيط الجرس
                         }
                     });
                 }
@@ -302,7 +808,8 @@
                 knownIds = new Set(ordersList.map(o => o.firebaseId));
                 isFirstLoad = false;
                 allOrders = ordersList;
-                updateDashboard();
+                
+                updateDashboardCounts();
                 renderOrders();
 
             } catch(e) {}
@@ -320,83 +827,113 @@
             } catch(e){}
         }
 
-        function updateDashboard() {
-            document.getElementById('st-total').innerText = allOrders.length;
+        // تحديث أرقام وإحصائيات لوحة التحكم والشبكة
+        function updateDashboardCounts() {
+            const pendingCount = allOrders.filter(o => o.status === 'pending').length;
             const activeCount = allOrders.filter(o => ['pending','processing','delivering'].includes(o.status)).length;
-            document.getElementById('st-active').innerText = activeCount;
-            
-            const recentHTML = allOrders.slice(0, 5).map(o => `
-                <div style="padding: 10px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;">
-                    <b>${o.orderCode}</b>
-                    <span style="color:var(--primary)">${o.customerName}</span>
-                </div>
-            `).join('');
-            document.getElementById('recentOrdersList').innerHTML = recentHTML || 'لا توجد طلبات حديثة';
+            const completedCount = allOrders.filter(o => ['completed','accepted'].includes(o.status)).length;
+
+            // تحديث الشريط العلوي
+            document.getElementById('qs-pending').innerText = pendingCount;
+            document.getElementById('qs-active').innerText = activeCount;
+            document.getElementById('qs-total').innerText = allOrders.length;
+
+            // جرس الإشعارات
+            const bell = document.getElementById('bellBadge');
+            if (pendingCount > 0) {
+                bell.innerText = pendingCount;
+                bell.style.display = 'flex';
+            } else {
+                bell.style.display = 'none';
+            }
+
+            // بطاقة شبكة إدارة الطلبات
+            const badgeOrders = document.getElementById('badge-orders');
+            if (pendingCount > 0) {
+                badgeOrders.innerText = `${pendingCount} جديد`;
+                badgeOrders.style.display = 'block';
+                document.getElementById('grid-order-subtitle').innerText = `يوجد ${pendingCount} طلبات جديدة!`;
+                document.getElementById('grid-order-subtitle').style.color = 'var(--danger)';
+            } else {
+                badgeOrders.style.display = 'none';
+                document.getElementById('grid-order-subtitle').innerText = 'عرض ومعالجة الطلبات';
+                document.getElementById('grid-order-subtitle').style.color = 'var(--text-muted)';
+            }
+
+            // تحديث واجهة الإحصائيات التفصيلية
+            const statTotalDetail = document.getElementById('stat-total-detail');
+            if (statTotalDetail) statTotalDetail.innerText = allOrders.length;
+            const statCompDetail = document.getElementById('stat-completed-detail');
+            if (statCompDetail) statCompDetail.innerText = completedCount;
         }
 
+        // عرض قائمة الطلبات
         function renderOrders() {
             const container = document.getElementById('ordersContainer');
-            // فلترة الطلبات حسب التبويب (إذا كان مكتمل نجمع accepted القديم مع completed)
+            if (!container) return;
+
             const filtered = allOrders.filter(o => {
                 if (currentStatusTab === 'completed') return o.status === 'completed' || o.status === 'accepted';
                 return o.status === currentStatusTab;
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">لا توجد طلبات في هذا القسم حالياً.</div>`;
+                container.innerHTML = `<div style="text-align: center; padding: 40px 10px; color: var(--text-muted); font-size:13px; font-weight:bold;">لا توجد طلبات في هذا القسم حالياً ✨</div>`;
                 return;
             }
 
             container.innerHTML = filtered.map(order => {
-                let badge = { bg: 'rgba(255,206,32,0.2)', col: '#b28c00', txt: 'جديد' };
-                if(order.status === 'processing') badge = { bg: 'rgba(67,24,255,0.1)', col: 'var(--primary)', txt: 'قيد التحضير' };
-                if(order.status === 'delivering') badge = { bg: 'rgba(255,206,32,0.2)', col: '#b28c00', txt: 'في الطريق' };
-                if(['completed','accepted'].includes(order.status)) badge = { bg: 'rgba(5,205,153,0.2)', col: 'var(--success)', txt: 'مكتمل' };
-                if(order.status === 'rejected') badge = { bg: 'rgba(238,93,80,0.2)', col: 'var(--danger)', txt: 'ملغى' };
+                let badge = { bg: 'rgba(255,181,71,0.2)', col: '#b28c00', txt: 'جديد ⏳', border: 'var(--warning)' };
+                if(order.status === 'processing') badge = { bg: 'rgba(67,24,255,0.1)', col: 'var(--primary)', txt: 'قيد التحضير 🍳', border: 'var(--primary)' };
+                if(order.status === 'delivering') badge = { bg: 'rgba(14,165,233,0.15)', col: '#0284c7', txt: 'في الطريق 🛵', border: '#0284c7' };
+                if(['completed','accepted'].includes(order.status)) badge = { bg: 'rgba(5,205,153,0.2)', col: 'var(--success)', txt: 'مكتمل ✅', border: 'var(--success)' };
+                if(order.status === 'rejected') badge = { bg: 'rgba(238,93,80,0.2)', col: 'var(--danger)', txt: 'ملغى ❌', border: 'var(--danger)' };
 
                 return `
-                <div class="order-card">
-                    <div class="o-header">
+                <div class="order-card" style="border-right-color: ${badge.border};">
+                    <div class="o-top">
                         <div>
-                            <div class="order-id">${order.orderCode}</div>
-                            <div class="order-time">${order.dateText || ''}</div>
+                            <div class="o-code">${order.orderCode}</div>
+                            <div class="o-time">${order.dateText || ''}</div>
                         </div>
                         <div class="o-badge" style="background:${badge.bg}; color:${badge.col};">${badge.txt}</div>
                     </div>
-                    <div class="o-body">
-                        👤 <b>${order.customerName}</b><br>
-                        📍 ${order.location}<br>
-                        📞 ${order.phone}
-                        <div style="margin-top:10px; background:#f8fafc; padding:8px; border-radius:8px;">
-                            ${(order.details||'').replace(/\n/g, '<br>')}
-                        </div>
+                    <div class="o-info">
+                        <div>👤 <b>${order.customerName}</b></div>
+                        <div>📍 ${order.location}</div>
+                        <div>📞 <a href="tel:${order.phone}" style="color:var(--primary); text-decoration:none;">${order.phone}</a></div>
+                        <div class="o-items">${(order.details||'').replace(/\n/g, '<br>')}</div>
                     </div>
-                    <button class="btn btn-primary" style="width: 100%;" onclick='openModal(${JSON.stringify(order).replace(/'/g, "&#39;")})'>
-                        ⚙️ معالجة وإدارة الطلب
+                    <button class="btn-manage-order" onclick='openModal(${JSON.stringify(order).replace(/'/g, "&#39;")})'>
+                        ⚙️ إدارة وتعديل الطلب
                     </button>
                 </div>`;
             }).join('');
         }
 
+        // تفاصيل ومعالجة الطلب
         function openModal(order) {
             selectedOrderId = order.firebaseId;
-            document.getElementById('bellDot').style.display = 'none'; // إخفاء إشعار الجرس
             const modal = document.getElementById('orderModal');
             document.getElementById('modalContent').innerHTML = `
-                <b>رقم الطلب:</b> ${order.orderCode} <br>
+                <b>رقم الطلب:</b> <span style="color:var(--primary);">${order.orderCode}</span> <br>
                 <b>العميل:</b> ${order.customerName} <br>
                 <b>رقم الهاتف:</b> ${order.phone} <br>
-                <b>العنوان:</b> ${order.location} <br><br>
-                <div style="background:#f1f5f9; padding:15px; border-radius:10px;">
-                    <b>الفاتورة والتفاصيل:</b><br>${(order.details||'').replace(/\n/g, '<br>')}
+                <b>العنوان:</b> ${order.location} <br>
+                <div style="background:#f8fafc; padding:10px; border-radius:10px; margin-top:8px; border:1px solid #e2e8f0;">
+                    <b>عناصر الطلب:</b><br>${(order.details||'').replace(/\n/g, '<br>')}
                 </div>
             `;
             modal.style.display = 'flex';
         }
 
+        function closeModal() {
+            document.getElementById('orderModal').style.display = 'none';
+        }
+
         async function processOrder(newStatus) {
             if (!selectedOrderId) return;
-            document.getElementById('orderModal').style.display = 'none';
+            closeModal();
 
             try {
                 await fetch(`${DB_URL}/orders/${selectedOrderId}.json`, {
@@ -405,19 +942,91 @@
                     body: JSON.stringify({ status: newStatus })
                 });
 
-                // إشعار تيليجرام
                 fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         chat_id: ADMIN_ID,
-                        text: `🔄 <b>تم تغيير حالة الطلب</b> إلى: <b>${newStatus}</b>\nسيتم إشعار الزبون وتحديث شاشته فوراً.`
+                        text: `🔄 <b>تحديث طلب:</b> تغيرت الحالة إلى <b>${newStatus}</b>.`
                     })
                 }).catch(()=>{});
 
                 fetchOrders();
             } catch(e) {
-                alert("خطأ في تحديث الحالة");
+                alert("حدث خطأ في تحديث الحالة");
+            }
+        }
+
+        async function deleteOrder() {
+            if (!selectedOrderId) return;
+            if (!confirm("هل أنت متأكد من مسح هذا الطلب نهائياً من قاعدة البيانات؟")) return;
+            closeModal();
+            try {
+                await fetch(`${DB_URL}/orders/${selectedOrderId}.json`, { method: 'DELETE' });
+                fetchOrders();
+            } catch(e) {
+                alert("حدث خطأ في المسح");
+            }
+        }
+
+        async function clearAllOrders() {
+            if (!confirm("⚠️ تحذير خطير: هل أنت متأكد من مسح وتصفير جميع الطلبات في النظام؟ هذا الإجراء سيحذف كل شيء ولا يمكن التراجع عنه!")) return;
+            try {
+                await fetch(`${DB_URL}/orders.json`, { method: 'DELETE' });
+                alert("✅ تم تصفير النظام بنجاح.");
+                fetchOrders();
+            } catch(e) {
+                alert("حدث خطأ أثناء التصفير.");
+            }
+        }
+
+        function editOrder() {
+            const order = allOrders.find(o => o.firebaseId === selectedOrderId);
+            if(!order) return;
+            
+            document.getElementById('modalContent').innerHTML = `
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <label><b>اسم العميل:</b></label>
+                    <input type="text" id="editName" value="${order.customerName}" style="padding:10px; border-radius:10px; border:1px solid #ccc; font-size:13px;">
+                    
+                    <label><b>رقم الهاتف:</b></label>
+                    <input type="text" id="editPhone" value="${order.phone}" style="padding:10px; border-radius:10px; border:1px solid #ccc; font-size:13px;">
+                    
+                    <label><b>العنوان:</b></label>
+                    <input type="text" id="editLoc" value="${order.location}" style="padding:10px; border-radius:10px; border:1px solid #ccc; font-size:13px;">
+                    
+                    <label><b>تفاصيل الفاتورة:</b></label>
+                    <textarea id="editDetails" rows="3" style="padding:10px; border-radius:10px; border:1px solid #ccc; font-size:13px;">${order.details}</textarea>
+                </div>
+            `;
+            
+            document.getElementById('editBtnGroup').innerHTML = `
+                <button class="btn btn-success" style="width: 100%;" onclick="saveOrderEdit()">💾 حفظ التعديلات</button>
+            `;
+        }
+
+        async function saveOrderEdit() {
+            if (!selectedOrderId) return;
+            const newName = document.getElementById('editName').value;
+            const newPhone = document.getElementById('editPhone').value;
+            const newLoc = document.getElementById('editLoc').value;
+            const newDetails = document.getElementById('editDetails').value;
+
+            try {
+                await fetch(`${DB_URL}/orders/${selectedOrderId}.json`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        customerName: newName,
+                        phone: newPhone,
+                        location: newLoc,
+                        details: newDetails
+                    })
+                });
+                closeModal();
+                fetchOrders();
+            } catch(e) {
+                alert("خطأ في حفظ التعديلات");
             }
         }
 
